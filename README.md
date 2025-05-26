@@ -1,1 +1,2 @@
-# devtree-frontend
+# DevTree
+React+SWC+Vite and TypeScript project
