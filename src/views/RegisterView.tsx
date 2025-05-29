@@ -1,8 +1,17 @@
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import ErrorMessage from '../components/ErrorMessage';
 
 export default function RegisterView() {
-  const { register, handleSubmit} = useForm();
+  const initialValues = {
+    name: '',
+    email: '',
+    username: '',
+    password: '',
+    password_confirmation: '',
+  }
+
+  const { register, handleSubmit, formState: { errors }} = useForm({defaultValues: initialValues});
   
   const handleRegister = () => {
     console.log('from handleRegister');
@@ -27,6 +36,7 @@ export default function RegisterView() {
               required: 'Name is required'
             })}
           />
+          {errors.name && <ErrorMessage>{errors.name.message}</ErrorMessage>}
         </div>
         <div className="grid grid-cols-1 space-y-3">
           <label htmlFor="email" className="text-2xl text-slate-500">E-mail</label>
@@ -39,6 +49,7 @@ export default function RegisterView() {
               required: 'Email is required'
             })}
           />
+          {errors.email && <ErrorMessage>{errors.email.message}</ErrorMessage>}
         </div>
         <div className="grid grid-cols-1 space-y-3">
           <label htmlFor="username" className="text-2xl text-slate-500">Username</label>
@@ -51,6 +62,7 @@ export default function RegisterView() {
               required: 'Username is required'
             })}
           />
+          {errors.username && <ErrorMessage>{errors.username.message}</ErrorMessage>}
         </div>
         <div className="grid grid-cols-1 space-y-3">
           <label htmlFor="password" className="text-2xl text-slate-500">Password</label>
@@ -63,6 +75,7 @@ export default function RegisterView() {
               required: 'Password is required'
             })}
           />
+          {errors.password && <ErrorMessage>{errors.password.message}</ErrorMessage>}
         </div>
 
         <div className="grid grid-cols-1 space-y-3">
@@ -76,6 +89,7 @@ export default function RegisterView() {
               required: 'Password is required'
             })}
           />
+          {errors.password_confirmation && <ErrorMessage>{errors.password_confirmation.message}</ErrorMessage>}
         </div>
 
         <input
