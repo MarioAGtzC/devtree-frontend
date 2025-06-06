@@ -1,9 +1,11 @@
+import axios, { isAxiosError } from 'axios';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import type { RegisterForm } from '../types';
 import ErrorMessage from '../components/ErrorMessage';
 
 export default function RegisterView() {
-  const initialValues = {
+  const initialValues: RegisterForm = {
     name: '',
     email: '',
     username: '',
@@ -11,10 +13,21 @@ export default function RegisterView() {
     password_confirmation: '',
   }
 
-  const { register, handleSubmit, formState: { errors }} = useForm({defaultValues: initialValues});
+  const { register, watch, reset, handleSubmit, formState: { errors }} = useForm({defaultValues: initialValues});
+
+  const password = watch('password');
   
-  const handleRegister = () => {
-    console.log('from handleRegister');
+  const handleRegister = async(formData: RegisterForm) => {
+    try {
+      const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/auth/register`, formData);
+      console.log(data);
+
+      reset();
+    } catch (error) {
+      if(isAxiosError(error) && error.response) {
+        console.log(error.response?.data.errors);
+      }
+    }
   }
 
   return (
@@ -46,7 +59,11 @@ export default function RegisterView() {
             placeholder="Registration Email"
             className="bg-slate-100 border-none p-3 rounded-lg placeholder-slate-400"
             {...register('email', {
-              required: 'Email is required'
+              required: 'Email is required',
+              pattern: {
+                value: /\S+@\S+\.\S+/,
+                message: 'Invalid email',
+              }
             })}
           />
           {errors.email && <ErrorMessage>{errors.email.message}</ErrorMessage>}
@@ -72,7 +89,11 @@ export default function RegisterView() {
             placeholder="Registration Password"
             className="bg-slate-100 border-none p-3 rounded-lg placeholder-slate-400"
             {...register('password', {
-              required: 'Password is required'
+              required: 'Password is required',
+              pattern: {
+                value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/,
+                message: 'Password must be at least 8 characters long and include at least one lowercase letter, one uppercase letter, one number, and one special character'
+              }
             })}
           />
           {errors.password && <ErrorMessage>{errors.password.message}</ErrorMessage>}
@@ -86,7 +107,8 @@ export default function RegisterView() {
             placeholder="Repeat Password"
             className="bg-slate-100 border-none p-3 rounded-lg placeholder-slate-400"
             {...register('password_confirmation', {
-              required: 'Password is required'
+              required: 'Password is required',
+              validate: (value) => value === password || 'The passwords don\'t match'
             })}
           />
           {errors.password_confirmation && <ErrorMessage>{errors.password_confirmation.message}</ErrorMessage>}
