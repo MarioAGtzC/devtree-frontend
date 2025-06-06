@@ -1,3 +1,4 @@
+import { toast } from 'sonner';
 import axios, { isAxiosError } from 'axios';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -20,12 +21,14 @@ export default function RegisterView() {
   const handleRegister = async(formData: RegisterForm) => {
     try {
       const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/auth/register`, formData);
-      console.log(data);
-
+      toast.success(data, { richColors: true });
       reset();
     } catch (error) {
       if(isAxiosError(error) && error.response) {
-        console.log(error.response?.data.errors);
+        const errors = error.response?.data.errors;
+        errors.forEach((err: { msg: string }) => {
+          toast.error(err.msg, { richColors: true });
+        });
       }
     }
   }
