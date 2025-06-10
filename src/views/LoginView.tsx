@@ -1,5 +1,8 @@
+import { toast } from 'sonner';
+import { isAxiosError } from 'axios';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import api from '../config/axios';
 import type { LoginForm } from '../types';
 import ErrorMessage from '../components/ErrorMessage';
 
@@ -8,10 +11,18 @@ export default function LoginView() {
     email: '',
     password: '',
   }
+
   const {register, handleSubmit, formState: {errors}} = useForm({defaultValues});
   
-  const handleLogin = (formData: LoginForm) => {
-    console.log(formData);
+  const handleLogin = async(formData: LoginForm) => {
+    try {
+      const { data } = await api.post(`/auth/login`, formData);
+      localStorage.setItem('AUTH_TOKEN', data);
+    } catch (error) {
+      if(isAxiosError(error) && error.response) {
+        toast.error(error.response?.data?.error, { richColors: true });
+      }
+    }
   }
 
   return (
