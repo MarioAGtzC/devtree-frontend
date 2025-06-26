@@ -1,3 +1,4 @@
+import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import type { User, ProfileForm } from '../types';
@@ -16,16 +17,20 @@ export default function ProfileView() {
   const updateProfileMutation = useMutation({
     mutationFn: updateProfile,
     onError: (error) => {
-      console.error(error);
+      if(error instanceof Error) {
+        toast.error(error.message, { richColors: true });
+      } else {
+        (error as []).forEach((err: { msg: string }) => {
+          toast.error(err.msg, { richColors: true });
+        });
+      }
     },
     onSuccess: (data) => {
-      console.log(data);
+      toast.success(`${data}`, { richColors: true });
     }
   });
 
   const handleUserProfileForm = (formData: ProfileForm) => {
-    console.log(formData);
-
     updateProfileMutation.mutate(formData);
   }
 
