@@ -27,6 +27,7 @@ export default function ProfileView() {
     },
     onSuccess: (data) => {
       toast.success(`${data}`, { richColors: true });
+      queryClient.invalidateQueries({ queryKey: ['user'] })
     }
   });
 
