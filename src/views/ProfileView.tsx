@@ -1,11 +1,13 @@
 import { toast } from 'sonner';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import type { User, ProfileForm } from '../types';
-import { updateProfile } from '../api/DevTreeAPI';
+import { updateProfile, uploadimage } from '../api/DevTreeAPI';
 import ErrorMessage from '../components/ErrorMessage';
 
 export default function ProfileView() {
+  const [file, setFile] = useState<File>();
   const queryClient = useQueryClient();
   const data = queryClient.getQueryData<User>(['user']);
 
@@ -27,18 +29,31 @@ export default function ProfileView() {
     },
     onSuccess: (data) => {
       toast.success(`${data}`, { richColors: true });
-      queryClient.invalidateQueries({ queryKey: ['user'] })
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+    }
+  });
+
+  const uploadImageMutation = useMutation({
+    mutationFn: uploadimage,
+    onError: (error) => {
+      console.log(error);
+    },
+    onSuccess: (data) => {
+      console.log(data);
     }
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if(e.target.files) {
-      console.log(e.target.files[0]);
+      setFile(e.target.files[0]);
     }
   }
 
   const handleUserProfileForm = (formData: ProfileForm) => {
     updateProfileMutation.mutate(formData);
+    if (file) {
+      uploadImageMutation.mutate(file);
+    }
   }
 
   return (
