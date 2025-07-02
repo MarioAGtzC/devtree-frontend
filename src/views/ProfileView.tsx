@@ -36,11 +36,15 @@ export default function ProfileView() {
   const uploadImageMutation = useMutation({
     mutationFn: uploadimage,
     onError: (error) => {
-      console.log(error);
+      toast.error(error.message, { richColors: true });
     },
     onSuccess: (data) => {
-      console.log(data);
-      queryClient.invalidateQueries({ queryKey: ['user'] });
+      queryClient.setQueryData( ['user'], (prevData: User) => {
+        return {
+          ...prevData,
+          image: data,
+        }
+      });
     }
   });
 
