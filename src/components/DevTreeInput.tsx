@@ -4,9 +4,10 @@ import type { DevTreeLink } from '../types';
 
 type DevTreeInputProps = {
   item: DevTreeLink
+  handleUrlChange: (e: React.ChangeEvent<HTMLInputElement>) => void
 }
 
-export default function DevTreeInput({item}: DevTreeInputProps) {
+export default function DevTreeInput({item, handleUrlChange}: DevTreeInputProps) {
   return (
     <div className='bg-white shadow-sm p-5 flex items-center'>
       <div
@@ -16,6 +17,9 @@ export default function DevTreeInput({item}: DevTreeInputProps) {
       <input
         type='text'
         className='flex-1 border border-gray-100 rounded-3xl'
+        value={item.url}
+        onChange={handleUrlChange}
+        name={item.name}
       />
       <Switch
         checked={item.enabled}
