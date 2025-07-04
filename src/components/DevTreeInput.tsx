@@ -5,9 +5,10 @@ import type { DevTreeLink } from '../types';
 type DevTreeInputProps = {
   item: DevTreeLink
   handleUrlChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  handleEnableLink: (socialNetwork: string) => void
 }
 
-export default function DevTreeInput({item, handleUrlChange}: DevTreeInputProps) {
+export default function DevTreeInput({item, handleUrlChange, handleEnableLink}: DevTreeInputProps) {
   return (
     <div className='bg-white shadow-sm p-5 flex items-center'>
       <div
@@ -20,10 +21,11 @@ export default function DevTreeInput({item, handleUrlChange}: DevTreeInputProps)
         value={item.url}
         onChange={handleUrlChange}
         name={item.name}
-      />
+        />
       <Switch
         checked={item.enabled}
-        onChange={() => {}}
+        name={item.name}
+        onChange={() => handleEnableLink(item.name)}
         className={classNames(
           item.enabled ? 'bg-blue-500' : 'bg-gray-200',
           'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-blue-500 focus:ring-offset-2'

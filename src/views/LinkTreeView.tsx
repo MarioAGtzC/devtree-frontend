@@ -10,6 +10,12 @@ export default function LinkTreeView() {
 
     setDevTreeLinks(updatedLinks);
   }
+
+  const handleEnableLink = (socialNetwork: string) => {
+    const updatedLinks = devTreeLinks.map(link => link.name === socialNetwork ? {...link, enabled: !link.enabled } : link);
+
+    setDevTreeLinks(updatedLinks);
+  }
   
   return (
     <>
@@ -19,6 +25,7 @@ export default function LinkTreeView() {
             key={item.name}
             item={item}
             handleUrlChange={handleUrlChange}
+            handleEnableLink={handleEnableLink}
           />
         ))}
       </div>
