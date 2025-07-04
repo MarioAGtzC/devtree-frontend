@@ -1,4 +1,6 @@
+import { toast } from 'sonner';
 import { useState } from 'react';
+import { isValidUrl } from '../utils';
 import { social } from '../data/social';
 import DevTreeInput from '../components/DevTreeInput';
 
@@ -12,7 +14,16 @@ export default function LinkTreeView() {
   }
 
   const handleEnableLink = (socialNetwork: string) => {
-    const updatedLinks = devTreeLinks.map(link => link.name === socialNetwork ? {...link, enabled: !link.enabled } : link);
+    const updatedLinks = devTreeLinks.map(link => {
+      if(link.name === socialNetwork) {
+        if(isValidUrl(link.url)) {
+          return {...link, enabled: !link.enabled };
+        } else {
+        toast.error('Not a valid URL', { richColors: true });
+        }
+      }
+      return link;
+    });
 
     setDevTreeLinks(updatedLinks);
   }
