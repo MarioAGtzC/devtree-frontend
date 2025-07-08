@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { Toaster } from 'sonner';
+import { useEffect, useState } from 'react';
 import { Link, Outlet } from 'react-router-dom';
 import DevTreeLink from './DevTreeLink';
 import NavigationTabs from './NavigationTabs';
@@ -12,6 +12,10 @@ type DevTreeProps = {
 export default function DevTree({data}: DevTreeProps) {
   const [enabledLinks, setEnabledLinks] = useState<SocialNetwork[]>(JSON.parse(data.links).filter((item: SocialNetwork) => item.enabled));
   
+  useEffect(() => {
+    setEnabledLinks(JSON.parse(data.links).filter((item: SocialNetwork) => item.enabled));
+  }, [data]);
+
   return (
     <>
       <header className='bg-slate-800 py-5'>
