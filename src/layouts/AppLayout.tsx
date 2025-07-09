@@ -13,7 +13,7 @@ export default function AppLayout() {
     refetchOnWindowFocus: false
   });
 
-  if(isLoading) return <Loader/>
+  if(isLoading) return <div className='bg-slate-800 min-h-screen flex justify-center items-center'><Loader/></div>
   if(isError) return <Navigate to={'/auth/login'}/>
   if (data) return <DevTree data={data}/>
 }
