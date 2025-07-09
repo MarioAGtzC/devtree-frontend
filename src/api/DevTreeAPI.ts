@@ -40,3 +40,17 @@ export async function uploadimage(file: File) {
     }
   }
 }
+
+export async function getUserByUsername(username: string) {
+  try {
+    const { data } = await api(`/${username}`);
+    return data;
+  } catch (error) {
+    if(isAxiosError(error) && error.response) {
+      if(error.response?.data?.error) {
+        throw new Error(error.response?.data?.error);
+      }
+      throw error.response?.data?.errors
+    }
+  }
+}
