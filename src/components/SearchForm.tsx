@@ -45,7 +45,9 @@ export default function SearchForm() {
       <div className='mt-10'>
         {mutation.isPending && <p className='text-center'>Loading...</p>}
         {mutation.isError && <p className='text-center text-red-600 font-black'>{Array.isArray(mutation.error) ? mutation.error[0]?.msg : mutation.error?.message}</p>}
-        {mutation.data && <p className='text-center text-cyan-500 font-black'>{mutation.data} go to <Link to={'/auth/register'}>Register</Link></p>}
+        {mutation.data && <p className='text-center text-cyan-500 font-black'>
+          {mutation.data} go to <Link to={'/auth/register'} state={{username: slugify(username)}}>Register</Link>
+        </p>}
       </div>
 
       <input

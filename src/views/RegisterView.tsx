@@ -1,16 +1,18 @@
 import { toast } from 'sonner';
 import { isAxiosError } from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import api from '../config/axios';
 import type { RegisterForm } from '../types';
 import ErrorMessage from '../components/ErrorMessage';
 
 export default function RegisterView() {
+  const location = useLocation();
+  
   const initialValues: RegisterForm = {
     name: '',
     email: '',
-    username: '',
+    username: location?.state?.username || '',
     password: '',
     password_confirmation: '',
   }
