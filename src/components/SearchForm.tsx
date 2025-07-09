@@ -1,3 +1,4 @@
+import slugify from 'react-slugify';
 import { useForm } from 'react-hook-form';
 import ErrorMessage from './ErrorMessage';
 
@@ -11,7 +12,8 @@ export default function SearchForm() {
   const username = watch('username');
 
   const handleSearch = () => {
-    console.log(username);
+    const slug = slugify(username)
+    console.log(slug);
   }
 
   return (
