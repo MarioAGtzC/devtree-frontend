@@ -14,9 +14,7 @@ export default function UsernameView() {
 
   if(isLoading) return <div className='flex justify-center'><Loader/></div>
   if(isError) return <Navigate to={'/404'}/>
-  console.log(data);
-
-  return (
-    <div>UsernameView</div>
+  if(data) return (
+    <div>{data.description}</div>
   )
 }
