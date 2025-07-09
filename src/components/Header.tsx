@@ -1,3 +1,5 @@
+import AdminNavigation from './nav/AdminNavigation';
+
 export default function Header() {
   return (
     <header className='bg-slate-800 py-5'>
@@ -6,10 +8,7 @@ export default function Header() {
           <img src='/logo.svg' className='w-full block'/>
         </div>
         <nav className='md:w-1/3 md:flex md:justify-end'>
-          <button
-            className='bg-lime-500 p-2 text-slate-800 uppercase font-black text-xs rounded-lg cursor-pointer'
-            onClick={() => {}}
-          >Log out</button>
+          <AdminNavigation/>
         </nav>
       </div>
     </header>
