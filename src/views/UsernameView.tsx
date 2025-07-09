@@ -1,7 +1,7 @@
-import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { getUserByUsername } from '../api/DevTreeAPI';
+import { Navigate, useParams } from 'react-router-dom';
 import Loader from '../components/Loader';
+import { getUserByUsername } from '../api/DevTreeAPI';
 
 export default function UsernameView() {
   const params = useParams();
@@ -13,7 +13,7 @@ export default function UsernameView() {
   });
 
   if(isLoading) return <div className='flex justify-center'><Loader/></div>
-  console.log(isError);
+  if(isError) return <Navigate to={'/404'}/>
   console.log(data);
 
   return (
