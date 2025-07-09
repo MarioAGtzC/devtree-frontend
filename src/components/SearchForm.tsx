@@ -1,6 +1,9 @@
 import slugify from 'react-slugify';
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import { useMutation } from '@tanstack/react-query';
 import ErrorMessage from './ErrorMessage';
+import { searchByUsername } from '../api/DevTreeAPI';
 
 export default function SearchForm() {
   const { register, handleSubmit, watch, formState: { errors }} = useForm({
@@ -9,11 +12,15 @@ export default function SearchForm() {
     }
   });
 
+  const mutation = useMutation({
+    mutationFn: searchByUsername
+  });
+
   const username = watch('username');
 
   const handleSearch = () => {
     const slug = slugify(username)
-    console.log(slug);
+    mutation.mutate(slug);    
   }
 
   return (
@@ -36,7 +43,9 @@ export default function SearchForm() {
       {errors.username && <ErrorMessage>{errors.username.message}</ErrorMessage>}
 
       <div className='mt-10'>
-
+        {mutation.isPending && <p className='text-center'>Loading...</p>}
+        {mutation.isError && <p className='text-center text-red-600 font-black'>{Array.isArray(mutation.error) ? mutation.error[0]?.msg : mutation.error?.message}</p>}
+        {mutation.data && <p className='text-center text-cyan-500 font-black'>{mutation.data} go to <Link to={'/auth/register'}>Register</Link></p>}
       </div>
 
       <input

@@ -54,3 +54,17 @@ export async function getUserByUsername(username: string) {
     }
   }
 }
+
+export async function searchByUsername(username: string) {
+  try {
+    const { data } = await api.post<string>('/search', {username});
+    return data;
+  } catch (error) {
+    if(isAxiosError(error) && error.response) {
+      if(error.response?.data?.error) {
+        throw [{ msg: error.response?.data?.error }];
+      }
+      throw error.response?.data?.errors
+    }
+  }
+}
