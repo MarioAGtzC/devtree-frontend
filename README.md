@@ -1,69 +1,84 @@
-# DevTree
+# DevTree — Frontend
 
-DevTree is a Linktree-style web app that lets developers publish a single, shareable page (`devtree.greenie.dev/username`) with a profile photo, bio, and a curated, reorderable list of social/portfolio links. This repository contains the frontend client — a React + TypeScript SPA that consumes a separate DevTree REST API.
+DevTree is a link-in-bio web app for developers. Each user gets one public page at `devtree.greenie.dev/<username>` with a profile photo, a short bio and a list of their social links in the order they choose. This repository is the React + TypeScript single-page app. It talks to a separate REST API ([devtree-backend](https://github.com/MarioAGtzC/devtree-backend)).
 
-**Live site:** [https://devtree.greenie.dev/](https://devtree.greenie.dev/)
-**Repository:** [https://github.com/MarioAGtzC/devtree-frontend](https://github.com/MarioAGtzC/devtree-frontend)
+**Live site:** https://devtree.greenie.dev
 
-## The Problem It Solves
+---
 
-Developers and creators typically have their presence scattered across many platforms — GitHub, LinkedIn, Twitch, YouTube, X, Instagram, TikTok, Facebook — but only one link slot available in most social media bios. DevTree solves this by giving each user a single, personal, brandable URL that consolidates every relevant link in one place.
+## The problem it solves
 
-From a user's perspective, DevTree answers three needs:
+A developer's work and presence are usually spread across GitHub, LinkedIn, YouTube, Twitch, X and other platforms, but most social profiles allow only one link. DevTree gives each person a single, memorable URL that collects all of those links, and the person decides which ones show and in what order.
 
-- **Discoverability** — check instantly whether a desired username/handle is available before signing up.
-- **Control** — decide which social networks to show, provide the URL for each, and toggle them on/off at any time.
-- **Presentation** — arrange links in whatever order matters most via drag-and-drop, and personalize the public page with a profile photo and short bio.
+The app covers the full user journey:
 
-## My Role and Process
+- **Claim a handle:** visitors check on the home page whether a username is free, then go straight to registration with that handle pre-filled.
+- **Control what is shown:** users add a URL for each supported network (Facebook, GitHub, Instagram, X, YouTube, TikTok, Twitch, LinkedIn) and switch each one on or off.
+- **Present it their way:** users reorder links by drag and drop, upload a profile image and write a bio, with a live preview next to the editor.
+- **Share one link:** the public page at `/<username>` shows only the enabled links. Unknown usernames go to a "User Not Found" page.
 
-I designed and built the entire frontend client end-to-end, working feature-by-feature against a REST API contract (auth, profile, and public-lookup endpoints). The development history reflects an incremental, commit-per-feature workflow:
+## My role and process
 
-1. **Foundation** — scaffolded the project with Vite, set up routing, Tailwind theming, and shared layouts (`AuthLayout` for public/auth pages, `AppLayout` for the authenticated admin area).
-2. **Public landing & discovery** — built the marketing home page and a username-search form (with slug normalization) that checks availability against the API before funneling users into registration.
-3. **Authentication** — implemented registration (with password-confirmation and complexity validation) and login, backed by JWT stored client-side and attached to requests automatically.
-4. **Protected admin area** — added route protection that redirects unauthenticated users to login, using React Query to fetch and cache the current user.
-5. **Profile management** — built the profile form (username, bio, avatar upload) with optimistic UI updates and toast-based error/success feedback.
-6. **Social links editor** — implemented the per-network link editor (URL input + enable/disable toggle with URL validation) and persisted changes back to the API.
-7. **Drag-and-drop ordering** — added reorderable enabled links using a sortable drag-and-drop context, persisting the new order.
-8. **Public profile page** — built the read-only public view (`/:username`) rendering the user's photo, bio, and enabled links, plus a custom 404 for unknown usernames.
+I built this solo as a 2025 course project. I followed the course material and then extended it. I built the whole frontend and integrated it with my own backend API.
 
-Throughout, the focus was on keeping server state (user/session data) and local UI state cleanly separated, minimizing boilerplate in forms, and giving immediate feedback on every mutation.
+**What I built**
 
-## Technologies and Tools Used
+- **Public area:** landing page with a username availability search, plus public profile pages.
+- **Authentication:** registration and login forms with client-side validation. This includes an email format check, a password strength rule (8+ characters with upper case, lower case, a number and a symbol) and a password confirmation match.
+- **Protected admin area (`/admin`):** a links editor and a profile editor. If the current user can't be loaded, the user is redirected to login.
+- **Links editor:** URLs are validated before a link can be enabled, enabled links can be reordered by drag and drop, and changes are saved to the API in one action.
+- **Profile editor:** change username and bio, and upload an image as a multipart file.
+- **Deployment:** an SPA fallback rule so deep links like `/<username>` resolve correctly on the host.
 
-- **React 19 + TypeScript** — core UI framework and static typing for the whole application.
-- **Vite (with SWC)** — development server and production build tooling, chosen for fast HMR and build times.
-- **React Router** — client-side routing, including nested layouts for public, auth, and authenticated admin sections, plus route-level redirects for protected pages.
-- **TanStack React Query** — server-state management: fetching, caching, and invalidating the logged-in user's data, with manual cache updates for optimistic-style UI on profile and link changes.
-- **Axios** — HTTP client for all API communication, with a request interceptor that automatically attaches the JWT bearer token from local storage.
-- **JWT-based authentication** — session handling: token issued on login, persisted client-side, and used to gate access to the admin routes.
-- **React Hook Form** — form state, validation, and error handling across login, registration, and profile forms (including custom rules like password complexity and password-confirmation matching).
-- **Tailwind CSS (with `@tailwindcss/forms`)** — utility-first styling and consistent form-control theming, including a custom background image/theme extension for the landing page.
-- **dnd-kit** (`core` + `sortable`) — drag-and-drop reordering of enabled social links on the admin dashboard.
-- **Sonner** — toast notifications for surfacing API success/error responses (e.g., validation errors, save confirmations) throughout the app.
-- **Deployment on Netlify** — the production build is hosted and served via Netlify.
+**Approach**
 
-## Results or Impact
+- I split the app into route-level layouts: one for the public and auth pages and one for the authenticated dashboard.
+- Server data (the logged-in user) lives in a single query cache. Link toggles and reordering update that cache immediately so the preview reacts at once, and **Save changes** sends it to the API.
+- All API calls go through one HTTP client module, so auth headers and error handling live in one place.
+- The project grew one feature per commit: routing, then auth, profile, links, drag and drop, public pages and deployment fixes.
 
-- Shipped a fully functional, deployed product (devtree.greenie.dev) covering the complete user journey: discover a username → register → log in → edit profile & links → share a public page.
-- Decoupled server and UI state using React Query, removing manual loading/error/cache-invalidation boilerplate that would otherwise be duplicated across every data-fetching component.
-- Delivered an editable, drag-and-drop link ordering experience without hand-rolling pointer/touch event handling, keeping the interaction accessible and consistent across devices.
-- Centralized authentication concerns (token storage/attachment, protected-route redirects) so that individual views don't need to know about auth mechanics.
+## Technologies and tools
 
-## Screenshots / Demo
+| Area | What it does in this project |
+| --- | --- |
+| **Language & UI framework** | React 19 with TypeScript for a type-safe component-based SPA |
+| **Build & dev server** | Vite with the SWC React plugin for local development and production builds |
+| **Routing** | React Router for nested layouts, the `/admin` dashboard, dynamic `/:username` public pages and redirects to login or 404 |
+| **Server state** | TanStack Query for fetching and caching the current user and public profiles, mutations for saving, and cache updates for an instant preview |
+| **API communication** | Axios client with a configurable base URL and a request interceptor that attaches the auth token to every call |
+| **Authentication** | Token-based auth: the token returned at login is stored in the browser and sent as a Bearer header. Logging out clears it and invalidates the cached user |
+| **Forms & validation** | React Hook Form for registration, login, profile and search forms, with field-level validation rules |
+| **Drag-and-drop ordering** | dnd-kit (core + sortable) for reordering enabled links |
+| **Styling** | Tailwind CSS with the forms plugin and a custom theme extension for the landing page background |
+| **User feedback** | Sonner toast notifications for API success and error messages |
+| **Hosting & deployment** | Netlify, with a catch-all rewrite to `index.html` so client-side routes work on direct visits and refreshes |
 
-No screenshots are currently checked into this repository. Recommended location: add images to `public/screenshots/` and reference them here, for example:
+## Results and impact
 
-```md
-![Home page](public/screenshots/home.png)
-![Admin dashboard - link editor](public/screenshots/admin-links.png)
-![Public profile page](public/screenshots/public-profile.png)
-```
+- **Live in production** at [devtree.greenie.dev](https://devtree.greenie.dev), connected to my own backend, so it covers the full stack from UI to API.
+- **End-to-end product flow:** discovering a handle, signing up, editing a profile, curating links and sharing a public page all work in one app.
+- **Fewer bad saves:** client-side validation (email format, password strength, password match, URL format before a link can be enabled) catches common input errors before a request is sent.
+- **Responsive editing:** changes to links and order show in the preview right away, before they are saved.
 
-In the meantime, the live app can be explored directly at [https://devtree.greenie.dev/](https://devtree.greenie.dev/).
+No usage or performance metrics are tracked, so none are reported here.
+
+## Screenshots and live demo
+
+**Live demo:** https://devtree.greenie.dev
+
+There are no screenshots in the repository yet. Add them under `docs/screenshots/` and link them here. Suggested captures:
+
+1. Landing page with the username availability search
+2. Admin links editor with the live preview panel
+3. Profile editor (username, bio, image upload)
+4. A public profile page (`/<username>`)
 
 ## Links
 
-- **Live site:** [https://devtree.greenie.dev/](https://devtree.greenie.dev/)
-- **Repository:** [https://github.com/MarioAGtzC/devtree-frontend](https://github.com/MarioAGtzC/devtree-frontend)
+- **Live site:** https://devtree.greenie.dev
+- **Frontend (this repo):** https://github.com/MarioAGtzC/devtree-frontend
+- **Backend API / case study:** [devtree-backend](https://github.com/MarioAGtzC/devtree-backend)
+
+---
+
+**Author:** Mario Gutiérrez, Backend Software Engineer
