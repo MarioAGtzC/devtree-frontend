@@ -69,7 +69,7 @@ export default function RegisterView() {
             {...register('email', {
               required: 'Email is required',
               pattern: {
-                value: /\S+@\S+\.\S+/,
+                value: /^\S+@\S+\.\S+$/,
                 message: 'Invalid email',
               }
             })}

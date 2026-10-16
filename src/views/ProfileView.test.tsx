@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+﻿import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -57,9 +57,9 @@ describe('ProfileView', () => {
     expect(vi.mocked(updateProfile).mock.calls[0][0]).toMatchObject({ username: 'mario-dev', description: 'Dev' });
   });
 
-  // Known bug (review #6): the form mutates the cached user in place, so a rejected
-  // update still shows up in the preview. Flip to `it` once fixed.
-  it.fails('keeps the cached username when the server rejects the change', async () => {
+  // Regression (review #6): the form mutates the cached user in place, so a rejected
+  // update still shows up in the preview.
+  it('keeps the cached username when the server rejects the change', async () => {
     vi.mocked(updateProfile).mockRejectedValue(new Error('Username taken'));
     const { queryClient, user } = setup();
 

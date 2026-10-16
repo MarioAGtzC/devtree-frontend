@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
+﻿import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { AxiosError, type AxiosResponse } from 'axios';
 import api from '../config/axios';
 import { getUser, getUserByUsername, searchByUsername, updateProfile } from './DevTreeAPI';
@@ -31,9 +31,14 @@ describe('getUser', () => {
     await expect(getUser()).rejects.toThrow('Not authorized');
   });
 
-  // Known bug (review #2): errors without a response are swallowed and resolve to undefined.
-  // Flip `it.fails` to `it` once the catch rethrows.
-  it.fails('rejects when the API is unreachable', async () => {
+  // Regression: a body without `error` produced an Error with an empty message, so toasts were blank.
+  it('falls back to a readable message when the server sends no error text', async () => {
+    apiGet.mockRejectedValue(httpError(500, ''));
+    await expect(getUser()).rejects.toThrow('Something went wrong, please try again');
+  });
+
+  // Regression (review #2): errors without a response are swallowed and resolve to undefined.
+  it('rejects when the API is unreachable', async () => {
     apiGet.mockRejectedValue(networkError());
     await expect(getUser()).rejects.toThrow();
   });
@@ -51,8 +56,8 @@ describe('getUserByUsername', () => {
     await expect(getUserByUsername('ghost')).rejects.toThrow('User not found');
   });
 
-  // Known bug (review #2): same swallowed network error, so UsernameView renders blank.
-  it.fails('rejects when the API is unreachable', async () => {
+  // Regression (review #2): same swallowed network error, so UsernameView renders blank.
+  it('rejects when the API is unreachable', async () => {
     apiGet.mockRejectedValue(networkError());
     await expect(getUserByUsername('mario')).rejects.toThrow();
   });
@@ -69,6 +74,12 @@ describe('updateProfile', () => {
     const errors = [{ msg: 'Username is required' }];
     apiPatch.mockRejectedValue(httpError(400, { errors }));
     await expect(updateProfile(makeUser())).rejects.toEqual(errors);
+  });
+
+  // Regression: a body with neither `error` nor `errors` made it throw undefined, crashing onError.
+  it('rejects with a readable Error when the server body has no error fields', async () => {
+    apiPatch.mockRejectedValue(httpError(500, '<html>Internal Server Error</html>'));
+    await expect(updateProfile(makeUser())).rejects.toThrow('Something went wrong, please try again');
   });
 });
 

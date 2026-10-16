@@ -10,10 +10,12 @@ export default function AppLayout() {
     queryFn: getUser,
     queryKey: ['user'],
     retry: 1,
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: false,
+    // Unsaved link edits live in this cache; a background refetch would overwrite them
+    staleTime: Infinity
   });
 
   if(isLoading) return <div className='bg-slate-800 min-h-screen flex justify-center items-center'><Loader/></div>
-  if(isError) return <Navigate to={'/auth/login'}/>
+  if(isError) return <Navigate to={'/auth/login'} replace/>
   if (data) return <DevTree data={data}/>
 }

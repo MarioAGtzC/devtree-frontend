@@ -2,24 +2,28 @@ import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import api from '../config/axios';
 import LoginView from './LoginView';
 import RegisterView from './RegisterView';
+import { createTestQueryClient, makeUser } from '../test/utils';
 
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 vi.mock('../config/axios', () => ({ default: { post: vi.fn() } }));
 
 const apiPost = api.post as Mock;
 
-function renderAt(entry: string | { pathname: string; state: unknown }) {
+function renderAt(entry: string | { pathname: string; state: unknown }, queryClient: QueryClient = createTestQueryClient()) {
   render(
-    <MemoryRouter initialEntries={[entry]}>
-      <Routes>
-        <Route path='/auth/login' element={<LoginView />} />
-        <Route path='/auth/register' element={<RegisterView />} />
-        <Route path='/admin' element={<p>Admin page</p>} />
-      </Routes>
-    </MemoryRouter>
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={[entry]}>
+        <Routes>
+          <Route path='/auth/login' element={<LoginView />} />
+          <Route path='/auth/register' element={<RegisterView />} />
+          <Route path='/admin' element={<p>Admin page</p>} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>
   );
   return userEvent.setup();
 }
@@ -48,9 +52,24 @@ describe('LoginView', () => {
     expect(localStorage.getItem('AUTH_TOKEN')).toBe('jwt-token');
   });
 
-  // Known bug (review #7): the email regex isn't anchored, so any text containing
-  // an email-like substring passes. Flip to `it` once fixed.
-  it.fails('rejects text that only contains an email', async () => {
+  // Regression: ['user'] never goes stale, so logging into another account without logging out
+  // kept showing (and saving) the previous account's data.
+  it("drops the previous session's cached user on login", async () => {
+    apiPost.mockResolvedValue({ data: 'jwt-token' });
+    const queryClient = createTestQueryClient();
+    queryClient.setQueryData(['user'], makeUser({ username: 'alice' }));
+    const user = renderAt('/auth/login', queryClient);
+    await user.type(screen.getByLabelText('E-mail'), 'bob@example.com');
+    await user.type(screen.getByLabelText('Password'), 'secret');
+    await user.click(screen.getByRole('button', { name: /log in/i }));
+
+    expect(await screen.findByText('Admin page')).toBeInTheDocument();
+    expect(queryClient.getQueryData(['user'])).toBeUndefined();
+  });
+
+  // Regression (review #7): the email regex wasn't anchored, so any text containing
+  // an email-like substring passed.
+  it('rejects text that only contains an email', async () => {
     const user = renderAt('/auth/login');
     await user.type(screen.getByLabelText('E-mail'), 'junk a@b.c junk');
     await user.type(screen.getByLabelText('Password'), 'secret');

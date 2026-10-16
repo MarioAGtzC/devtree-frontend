@@ -55,10 +55,11 @@ I built this solo as a 2025 course project. I followed the course material and t
 
 ## Results and impact
 
-- **Live in production** at [devtree.greenie.dev](https://devtree.greenie.dev), connected to my own backend, so it covers the full stack from UI to API.
-- **End-to-end product flow:** discovering a handle, signing up, editing a profile, curating links and sharing a public page all work in one app.
-- **Fewer bad saves:** client-side validation (email format, password strength, password match, URL format before a link can be enabled) catches common input errors before a request is sent.
-- **Responsive editing:** changes to links and order show in the preview right away, before they are saved.
+- **Live in production** at [devtree.greenie.dev](https://devtree.greenie.dev), running against my own backend, so the project covers the full stack from UI to API.
+- **A complete user journey** in one app: find a free handle, sign up, edit the profile, pick and order links, and share the public page.
+- **Fewer failed saves:** checks in the browser (email format, password strength, password match, valid URL before a link is turned on) catch common mistakes before a request is sent.
+- **Instant feedback:** link changes and new orderings show in the preview before they are saved.
+- **Tested behaviour:** 57 automated tests across 7 test files, all passing. They run locally with `npm test`; there is no CI pipeline yet.
 
 No usage or performance metrics are tracked, so none are reported here.
 

@@ -56,10 +56,8 @@ export default function ProfileView() {
 
   const handleUserProfileForm = (formData: ProfileForm) => {
     const user : User = queryClient.getQueryData(['user'])!;
-    user.description = formData.description;
-    user.username = formData.username;
-
-    updateProfileMutation.mutate(user);
+    // Send a copy: editing the cached object in place left rejected changes in the preview
+    updateProfileMutation.mutate({ ...user, ...formData });
     if (file) {
       uploadImageMutation.mutate(file);
     }

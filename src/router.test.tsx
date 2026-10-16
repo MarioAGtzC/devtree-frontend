@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { QueryClientProvider } from '@tanstack/react-query';
+﻿import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { QueryClientProvider, onlineManager } from '@tanstack/react-query';
 import Router from './router';
 import { getUser, getUserByUsername } from './api/DevTreeAPI';
 import { createTestQueryClient, makeUser } from './test/utils';
@@ -40,6 +41,39 @@ describe('routing', () => {
     expect(await screen.findByText('Visit my profile: /mario')).toBeInTheDocument();
   });
 
+  // Regression: logout left the user query in error, so the next login bounced back to /auth/login.
+  it('shows the dashboard when logging in again after a logout', async () => {
+    vi.mocked(getUser).mockResolvedValue(makeUser());
+    localStorage.setItem('AUTH_TOKEN', 'token');
+    visit('/admin');
+    await screen.findByText('Visit my profile: /mario');
+
+    await userEvent.click(screen.getByRole('button', { name: /log out/i }));
+    expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument();
+    expect(localStorage.getItem('AUTH_TOKEN')).toBeNull();
+
+    act(() => {
+      window.history.pushState({}, '', '/admin');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+
+    expect(await screen.findByText('Visit my profile: /mario')).toBeInTheDocument();
+  });
+
+  // Regression: a reconnect refetched the user and overwrote unsaved edits in the cache.
+  it('does not refetch the logged-in user when the network reconnects', async () => {
+    vi.mocked(getUser).mockResolvedValue(makeUser());
+    visit('/admin');
+    await screen.findByText('Visit my profile: /mario');
+
+    await act(async () => {
+      onlineManager.setOnline(false);
+      onlineManager.setOnline(true);
+    });
+
+    expect(getUser).toHaveBeenCalledTimes(1);
+  });
+
   it('shows only enabled links on a public profile', async () => {
     vi.mocked(getUserByUsername).mockResolvedValue(makeUser({
       links: JSON.stringify([
@@ -60,10 +94,20 @@ describe('routing', () => {
     expect(await screen.findByText('User Not Found')).toBeInTheDocument();
   });
 
-  // Known bug (review #3): there is no catch-all route. Flip to `it` once fixed.
-  it.fails('sends unmatched paths to the "User Not Found" page', async () => {
+  // Regression (review #3): there is no catch-all route.
+  it('sends unmatched paths to the "User Not Found" page', async () => {
     visit('/foo/bar');
 
     expect(await screen.findByText('User Not Found', {}, { timeout: 200 })).toBeInTheDocument();
+  });
+
+  // Regression: the redirect pushed a history entry, so Back landed on the bad URL and redirected again.
+  it('replaces the unmatched path in history instead of pushing /404', async () => {
+    const length = window.history.length;
+    visit('/foo/bar'); // pushes one entry itself
+
+    await screen.findByText('User Not Found');
+    expect(window.location.pathname).toBe('/404');
+    expect(window.history.length).toBe(length + 1);
   });
 });

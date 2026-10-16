@@ -64,9 +64,9 @@ describe('LinkTreeView', () => {
     ]);
   });
 
-  // Known bug (review #1): disabling a link never renumbers the others, so the next
-  // enabled link reuses an id and dnd-kit gets duplicate keys. Flip to `it` once fixed.
-  it.fails('keeps enabled link ids unique after disabling and re-enabling links', async () => {
+  // Regression (review #1): disabling a link never renumbers the others, so the next
+  // enabled link reuses an id and dnd-kit gets duplicate keys.
+  it('keeps enabled link ids unique after disabling and re-enabling links', async () => {
     const { queryClient, urlInput, toggle, user } = setup();
     const enable = async (name: string) => {
       await user.type(urlInput(name), `https://${name}.com/mario`);
@@ -77,15 +77,15 @@ describe('LinkTreeView', () => {
     await enable('github'); // id 2
     await enable('instagram'); // id 3
     await user.click(toggle('facebook')); // disable
-    await enable('x'); // gets id 3 today: duplicate of instagram
+    await enable('x'); // used to reuse id 3, a duplicate of instagram
 
     const ids = cachedLinks(queryClient).filter(l => l.enabled).map(l => l.id);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  // Known bug (found while writing tests): toggling any link resets the inputs from the
-  // cache, wiping URLs typed into links that aren't enabled yet. Flip to `it` once fixed.
-  it.fails('keeps URLs typed into other links when toggling one', async () => {
+  // Regression (found while writing tests): toggling any link resets the inputs from the
+  // cache, wiping URLs typed into links that aren't enabled yet.
+  it('keeps URLs typed into other links when toggling one', async () => {
     const { urlInput, toggle, user } = setup();
 
     await user.type(urlInput('x'), 'https://x.com/mario');
@@ -95,8 +95,8 @@ describe('LinkTreeView', () => {
     expect(urlInput('x')).toHaveValue('https://x.com/mario');
   });
 
-  // Known bug (review #4): URL validation also runs when switching a link off.
-  it.fails('lets the user disable a link after clearing its URL', async () => {
+  // Regression (review #4): URL validation also runs when switching a link off.
+  it('lets the user disable a link after clearing its URL', async () => {
     const { urlInput, toggle, user } = setup();
 
     await user.type(urlInput('github'), 'https://github.com/mario');
@@ -105,6 +105,85 @@ describe('LinkTreeView', () => {
     await user.click(toggle('github'));
 
     expect(toggle('github')).toHaveAttribute('aria-checked', 'false');
+  });
+
+  it('stores the new URL when a link is disabled, edited and enabled again', async () => {
+    const { queryClient, urlInput, toggle, user } = setup();
+
+    await user.type(urlInput('github'), 'https://github.com/old');
+    await user.click(toggle('github'));
+    await user.click(toggle('github'));
+    await user.clear(urlInput('github'));
+    await user.type(urlInput('github'), 'https://github.com/new');
+    await user.click(toggle('github'));
+
+    expect(cachedLinks(queryClient)).toEqual([
+      { name: 'github', url: 'https://github.com/new', enabled: true, id: 1 },
+    ]);
+  });
+
+  it('stores URL edits of an enabled link', async () => {
+    const { queryClient, urlInput, toggle, user } = setup();
+
+    await user.type(urlInput('github'), 'https://github.com/old');
+    await user.click(toggle('github'));
+    await user.clear(urlInput('github'));
+    await user.type(urlInput('github'), 'https://github.com/new');
+
+    expect(cachedLinks(queryClient)[0].url).toBe('https://github.com/new');
+  });
+
+  it('does not save while an enabled link has an invalid URL', async () => {
+    const { urlInput, toggle, user } = setup();
+
+    await user.type(urlInput('github'), 'https://github.com/mario');
+    await user.click(toggle('github'));
+    await user.clear(urlInput('github'));
+    await user.click(screen.getByRole('button', { name: /save changes/i }));
+
+    expect(toast.error).toHaveBeenCalledWith('Not a valid URL: github', expect.anything());
+    expect(updateProfile).not.toHaveBeenCalled();
+  });
+
+  // Regression: URLs typed into links that were never enabled were not sent on save.
+  it('stores URLs typed into disabled links', async () => {
+    const { queryClient, urlInput, user } = setup();
+
+    await user.type(urlInput('x'), 'https://x.com/mario');
+
+    expect(cachedLinks(queryClient)).toEqual([
+      { name: 'x', url: 'https://x.com/mario', enabled: false, id: 0 },
+    ]);
+  });
+
+  it('keeps the dragged order when another link is enabled', async () => {
+    const { queryClient, urlInput, toggle, user } = setup();
+    // Order as DevTree's drag handler leaves it: github dragged above facebook, ids not yet renumbered
+    queryClient.setQueryData(['user'], makeUser({ links: JSON.stringify([
+      { name: 'github', url: 'https://github.com/mario', enabled: true, id: 2 },
+      { name: 'facebook', url: 'https://facebook.com/mario', enabled: true, id: 1 },
+    ]) }));
+
+    await user.type(urlInput('x'), 'https://x.com/mario');
+    await user.click(toggle('x'));
+
+    expect(cachedLinks(queryClient).map(l => [l.name, l.id])).toEqual([
+      ['github', 1], ['facebook', 2], ['x', 3],
+    ]);
+  });
+
+  it('does not send half-typed URLs of disabled links', async () => {
+    vi.mocked(updateProfile).mockResolvedValue(makeUser());
+    const { urlInput, toggle, user } = setup();
+
+    await user.type(urlInput('x'), 'htt');
+    await user.type(urlInput('github'), 'https://github.com/mario');
+    await user.click(toggle('github'));
+    await user.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await waitFor(() => expect(updateProfile).toHaveBeenCalled());
+    const sent = vi.mocked(updateProfile).mock.calls[0][0];
+    expect(JSON.parse(sent.links).map((l: { name: string }) => l.name)).toEqual(['github']);
   });
 
   it('saves the cached user, including links, when clicking Save changes', async () => {

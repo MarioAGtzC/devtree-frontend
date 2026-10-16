@@ -2,12 +2,14 @@ import { toast } from 'sonner';
 import { isAxiosError } from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import { useQueryClient } from '@tanstack/react-query';
 import api from '../config/axios';
 import type { LoginForm } from '../types';
 import ErrorMessage from '../components/ErrorMessage';
 
 export default function LoginView() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const defaultValues: LoginForm = {
     email: '',
     password: '',
@@ -19,6 +21,8 @@ export default function LoginView() {
     try {
       const { data } = await api.post(`/auth/login`, formData);
       localStorage.setItem('AUTH_TOKEN', data);
+      // ['user'] never goes stale (AppLayout), so drop any previous session's user before entering
+      queryClient.removeQueries({ queryKey: ['user'] });
       navigate('/admin');
     } catch (error) {
       if(isAxiosError(error) && error.response) {
@@ -46,7 +50,7 @@ export default function LoginView() {
             {...register('email', {
               required: 'Email is required',
               pattern: {
-                value: /\S+@\S+\.\S+/,
+                value: /^\S+@\S+\.\S+$/,
                 message: 'Invalid email',
               }
             })}

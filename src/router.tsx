@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginView from './views/LoginView';
 import RegisterView from './views/RegisterView';
 import AuthLayout from './layouts/AuthLayout';
@@ -32,6 +32,8 @@ export default function Router() {
         </Route>
 
         <Route path='/' element={<HomeView/>}/>
+
+        <Route path='*' element={<Navigate to='/404' replace/>}/>
       </Routes>
     </BrowserRouter>
   )
