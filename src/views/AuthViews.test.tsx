@@ -3,7 +3,9 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import api from '../config/axios';
+import { GENERIC_ERROR } from '../api/DevTreeAPI';
 import LoginView from './LoginView';
 import RegisterView from './RegisterView';
 import { createTestQueryClient, makeUser } from '../test/utils';
@@ -77,6 +79,17 @@ describe('LoginView', () => {
 
     expect(await screen.findByText('Invalid email')).toBeInTheDocument();
   });
+
+  // Regression: with no response (API down) the error was swallowed and nothing was shown
+  it('shows a message when the API is unreachable', async () => {
+    apiPost.mockRejectedValue(new Error('Network Error'));
+    const user = renderAt('/auth/login');
+    await user.type(screen.getByLabelText('E-mail'), 'mario@example.com');
+    await user.type(screen.getByLabelText('Password'), 'secret');
+    await user.click(screen.getByRole('button', { name: /log in/i }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(GENERIC_ERROR, expect.anything()));
+  });
 });
 
 describe('RegisterView', () => {
@@ -123,5 +136,14 @@ describe('RegisterView', () => {
       username: 'mario',
     })));
     expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument();
+  });
+
+  // Regression: a single `{ error }` body crashed on `errors.forEach` and showed nothing
+  it('shows the server message when the account already exists', async () => {
+    apiPost.mockRejectedValue({ isAxiosError: true, response: { data: { error: 'User already exists' } } });
+    const user = renderAt('/auth/register');
+    await fillForm(user, 'Secret123!');
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('User already exists', expect.anything()));
   });
 });

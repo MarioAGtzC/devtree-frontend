@@ -3,7 +3,7 @@ import api from '../config/axios';
 import type { User, Username } from '../types';
 
 // Shown when the server answers without an error message (e.g. a 500 with an HTML body)
-const GENERIC_ERROR = 'Something went wrong, please try again';
+export const GENERIC_ERROR = 'Something went wrong, please try again';
 
 export async function getUser() {
   try {

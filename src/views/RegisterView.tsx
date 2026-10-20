@@ -3,6 +3,7 @@ import { isAxiosError } from 'axios';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import api from '../config/axios';
+import { GENERIC_ERROR } from '../api/DevTreeAPI';
 import type { RegisterForm } from '../types';
 import ErrorMessage from '../components/ErrorMessage';
 
@@ -29,12 +30,10 @@ export default function RegisterView() {
       reset();
       navigate('/auth/login');
     } catch (error) {
-      if(isAxiosError(error) && error.response) {
-        const errors = error.response?.data.errors;
-        errors.forEach((err: { msg: string }) => {
-          toast.error(err.msg, { richColors: true });
-        });
-      }
+      // The server sends either `errors: [{ msg }]` (validation) or a single `error`
+      const data = isAxiosError(error) ? error.response?.data : undefined;
+      const messages: string[] = data?.errors?.map((err: { msg: string }) => err.msg) ?? [data?.error || GENERIC_ERROR];
+      messages.forEach(msg => toast.error(msg, { richColors: true }));
     }
   }
 

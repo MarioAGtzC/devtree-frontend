@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useQueryClient } from '@tanstack/react-query';
 import api from '../config/axios';
+import { GENERIC_ERROR } from '../api/DevTreeAPI';
 import type { LoginForm } from '../types';
 import ErrorMessage from '../components/ErrorMessage';
 
@@ -25,9 +26,9 @@ export default function LoginView() {
       queryClient.removeQueries({ queryKey: ['user'] });
       navigate('/admin');
     } catch (error) {
-      if(isAxiosError(error) && error.response) {
-        toast.error(error.response?.data?.error, { richColors: true });
-      }
+      // Network errors and bodies without `error` still need a visible message
+      const message = isAxiosError(error) && error.response?.data?.error;
+      toast.error(message || GENERIC_ERROR, { richColors: true });
     }
   }
 
